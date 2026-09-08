@@ -216,7 +216,7 @@ Setiap node menghasilkan output berbentuk **array of items**, dan tiap item puny
 Setelah nyaman dengan latihan dasar:
 
 1. **Cek tab output tiap node** — kunci membaca n8n, selalu lihat data apa yang tersedia dari node sebelumnya.
-2. **Pakai expression** — ketik `{{ $json.pesan }}` di kolom input node mana pun untuk mengambil data dari node sebelumnya.
+2. **Pakai expression** — ketik {% raw %}`{{ $json.pesan }}`{% endraw %} di kolom input node mana pun untuk mengambil data dari node sebelumnya.
 3. **Coba HTTP Request node** dengan API publik gratis, misalnya `https://jsonplaceholder.typicode.com/todos/1` (API khusus untuk latihan, stabil) atau `https://catfact.ninja/fact`.
 
    > Catatan: API `api.quotable.io` yang dulu populer untuk latihan sekarang sering down/tidak stabil — hindari untuk latihan baru.
@@ -229,3 +229,4 @@ Setelah nyaman dengan latihan dasar:
 Itu dia perjalanan setup n8n self-hosted saya dari nol di komputer lama — mulai dari Docker, Tailscale Funnel untuk akses publik, sampai kenalan konsep dasarnya. Kalau kamu juga sedang mencoba di hardware terbatas, semoga error-error di atas menghemat waktu debugging kamu.
 
 Langkah saya selanjutnya: mulai bangun workflow yang benar-benar dipakai sehari-hari — entah untuk otomasi kerja toko, atau bantu proses konten. Akan saya tulis lagi kalau ada progres.
+

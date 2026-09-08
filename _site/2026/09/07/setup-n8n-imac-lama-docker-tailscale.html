@@ -261,7 +261,7 @@ docker compose up <span class="nt">-d</span>
 
 <ol>
   <li><strong>Cek tab output tiap node</strong> — kunci membaca n8n, selalu lihat data apa yang tersedia dari node sebelumnya.</li>
-  <li><strong>Pakai expression</strong> — ketik `` di kolom input node mana pun untuk mengambil data dari node sebelumnya.</li>
+  <li><strong>Pakai expression</strong> — ketik <code class="language-plaintext highlighter-rouge">{{ $json.pesan }}</code> di kolom input node mana pun untuk mengambil data dari node sebelumnya.</li>
   <li>
     <p><strong>Coba HTTP Request node</strong> dengan API publik gratis, misalnya <code class="language-plaintext highlighter-rouge">https://jsonplaceholder.typicode.com/todos/1</code> (API khusus untuk latihan, stabil) atau <code class="language-plaintext highlighter-rouge">https://catfact.ninja/fact</code>.</p>
 
@@ -278,6 +278,7 @@ docker compose up <span class="nt">-d</span>
 <p>Itu dia perjalanan setup n8n self-hosted saya dari nol di komputer lama — mulai dari Docker, Tailscale Funnel untuk akses publik, sampai kenalan konsep dasarnya. Kalau kamu juga sedang mencoba di hardware terbatas, semoga error-error di atas menghemat waktu debugging kamu.</p>
 
 <p>Langkah saya selanjutnya: mulai bangun workflow yang benar-benar dipakai sehari-hari — entah untuk otomasi kerja toko, atau bantu proses konten. Akan saya tulis lagi kalau ada progres.</p>
+
 
   </div><a class="u-url" href="/2026/09/07/setup-n8n-imac-lama-docker-tailscale.html" hidden></a>
 </article>
