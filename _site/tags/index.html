@@ -11,14 +11,14 @@
 
   
 
-  <title>Yulian Hartadi</title>
+  <title>Tag Index | Yulian Hartadi</title>
 
   
   
   <meta name="author" content="Yulian Hartadi">
   
 
-  <meta name="description" content="AI Automation Specialist UMKM &amp; F&amp;B | n8n &amp; AI Agent">
+  <meta name="description" content="{% assign date_format = site.date_format | default: &quot;%B %-d, %Y&quot; %} {%- capture site_tags -%} {%- for tag in site.tags -%} {{- tag | first -}}{%- unless forloop.last -%},{%- endunless -%} {%- endfor -%} {%- endcapture -%} {%- assign tags_list = site_tags | split:&apos;,&apos; | sort -%} {%- for tag...">
 
   
 
@@ -81,8 +81,8 @@
 
   
   <meta property="og:site_name" content="Yulian Hartadi">
-  <meta property="og:title" content="Yulian Hartadi">
-  <meta property="og:description" content="AI Automation Specialist UMKM &amp; F&amp;B | n8n &amp; AI Agent">
+  <meta property="og:title" content="Tag Index | Yulian Hartadi">
+  <meta property="og:description" content="{% assign date_format = site.date_format | default: &quot;%B %-d, %Y&quot; %} {%- capture site_tags -%} {%- for tag in site.tags -%} {{- tag | first -}}{%- unless forloop.last -%},{%- endunless -%} {%- endfor -%} {%- endcapture -%} {%- assign tags_list = site_tags | split:&apos;,&apos; | sort -%} {%- for tag...">
 
   
   <meta property="og:image" content="http://localhost:4000/assets/img/avatar-icon.png">
@@ -90,8 +90,8 @@
 
   
   <meta property="og:type" content="website">
-  <meta property="og:url" content="http://localhost:4000/">
-  <link rel="canonical" href="http://localhost:4000/">
+  <meta property="og:url" content="http://localhost:4000/tags/">
+  <link rel="canonical" href="http://localhost:4000/tags/">
   
 
   
@@ -100,8 +100,8 @@
   <meta name="twitter:site" content="@yulianhartadi">
   <meta name="twitter:creator" content="@yulianhartadi">
 
-  <meta property="twitter:title" content="Yulian Hartadi">
-  <meta property="twitter:description" content="AI Automation Specialist UMKM &amp; F&amp;B | n8n &amp; AI Agent">
+  <meta property="twitter:title" content="Tag Index | Yulian Hartadi">
+  <meta property="twitter:description" content="{% assign date_format = site.date_format | default: &quot;%B %-d, %Y&quot; %} {%- capture site_tags -%} {%- for tag in site.tags -%} {{- tag | first -}}{%- unless forloop.last -%},{%- endunless -%} {%- endfor -%} {%- endcapture -%} {%- assign tags_list = site_tags | split:&apos;,&apos; | sort -%} {%- for tag...">
 
   
   <meta name="twitter:image" content="http://localhost:4000/assets/img/avatar-icon.png">
@@ -199,7 +199,7 @@
     <div class="row">
       <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1">
         <div class="page-heading">
-          <h1>Yulian Hartadi</h1>
+          <h1>Tag Index</h1>
           
           
           
@@ -221,62 +221,7 @@
     <div class=" col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 ">
       
 
-      <table>
-  <tbody>
-    <tr>
-      <td>AI Automation Specialist UMKM &amp; F&amp;B</td>
-      <td>n8n &amp; AI Agent</td>
-    </tr>
-  </tbody>
-</table>
-
-
-
-
-<!-- role="list" needed so that `list-style: none` in Safari doesn't remove the list semantics -->
-<ul class="posts-list list-unstyled" role="list">
-  
-  <li class="post-preview">
-    <article>
-      
-
-      
-
-      <a href="http://localhost:4000/2026-09-07-setup-n8n-imac-lama-docker-tailscale/">
-        <h2 class="post-title">Setup n8n Self-Hosted di Komputer Lama (4GB RAM): Panduan dari Nol</h2>
-
-        
-      </a>
-
-      
-      <p class="post-meta">
-        
-        Posted on September 7, 2026
-      </p>
-
-      
-
-      
-      
-
-      <div class="post-entry">
-        
-        Kalau kamu punya komputer lama yang nganggur — misalnya iMac 2011 dengan RAM cuma 4GB seperti punya saya — dan koneksi internet yang stabil dan unlimited, kamu bisa manfaatkan untuk otomatisasi kerja sehari-hari menggunakan AI tanpa perlu langganan cloud berbayar dulu. Semua langkah di bawah sudah saya coba sendiri, lengkap...
-        
-        
-          <a href="http://localhost:4000/2026-09-07-setup-n8n-imac-lama-docker-tailscale/" class="post-read-more">[Read&nbsp;More]</a>
-        
-      </div>
-      
-
-      
-
-    </article>
-  </li>
-  
-</ul>
-
-
+      <div id="full-tags-list"></div>
 
 
       
@@ -379,7 +324,7 @@
 
       
         &nbsp;&bull;&nbsp;
-        <a title="Edit this page on GitHub" href="https://github.com/yulianhartadi71/yulianhartadi71.github.io/edit/gh-pages/index.md" class="text_muted">Edit page</a>
+        <a title="Edit this page on GitHub" href="https://github.com/yulianhartadi71/yulianhartadi71.github.io/edit/gh-pages/tags.html" class="text_muted">Edit page</a>
        
 
       </p>

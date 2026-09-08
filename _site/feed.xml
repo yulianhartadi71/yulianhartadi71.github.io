@@ -1,231 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="id"><generator uri="https://jekyllrb.com/" version="3.10.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" hreflang="id" /><updated>2026-09-08T17:23:57+07:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Yulian Hartadi</title><subtitle>AI Automation Specialist UMKM Food &amp; Beverage</subtitle><author><name>Yulian Hartadi</name></author><entry><title type="html">Setup n8n Self-Hosted di Komputer Lama (4GB RAM): Panduan dari Nol</title><link href="http://localhost:4000/setup-n8n-imac-lama-docker-tailscale/" rel="alternate" type="text/html" title="Setup n8n Self-Hosted di Komputer Lama (4GB RAM): Panduan dari Nol" /><published>2026-09-07T00:00:00+07:00</published><updated>2026-09-07T00:00:00+07:00</updated><id>http://localhost:4000/setup-n8n-imac-lama-docker-tailscale</id><content type="html" xml:base="http://localhost:4000/setup-n8n-imac-lama-docker-tailscale/"><![CDATA[<p>Kalau kamu punya komputer lama yang nganggur — misalnya iMac 2011 dengan RAM cuma 4GB seperti punya saya — dan koneksi internet yang stabil dan unlimited, kamu bisa manfaatkan untuk otomatisasi kerja sehari-hari menggunakan AI tanpa perlu langganan cloud berbayar dulu. Semua langkah di bawah sudah saya coba sendiri, lengkap dengan error-error yang saya temui dan cara memperbaikinya.</p>
-
-<p>Target pembaca: sudah ngerti apa itu n8n, sudah pernah pakai terminal dasar, sudah install Docker, tapi belum pernah pakai n8n atau Docker Compose. Apa itu n8n, docker, kamu bisa search di internet atau baca di artikel-artikel saya sebelumnya.</p>
-
-<h2 id="yang-kamu-butuhkan">Yang Kamu Butuhkan</h2>
-
-<ul>
-  <li>Komputer/server dengan Linux (di tulisan ini: Linux Mint, tapi distro apa saja mirip)</li>
-  <li>Docker sudah terinstal (<strong>bukan</strong> Docker Desktop — kita pakai Docker CLI murni lewat terminal)</li>
-  <li>Koneksi internet</li>
-  <li>Akun Tailscale gratis (untuk akses publik nanti — opsional tapi direkomendasikan)</li>
-</ul>
-
-<h2 id="kenapa-docker-bukan-virtual-machine">Kenapa Docker, Bukan Virtual Machine</h2>
-
-<p>Docker container berbagi kernel OS host, beda dengan VM yang menjalankan OS tamu penuh. Karena itu container jauh lebih ringan dan cepat dinyalakan — penting banget di mesin dengan RAM terbatas seperti iMac saya. Bonus lain: Docker Engine di Linux itu open source penuh (lisensi Apache-2.0), jadi tidak ada masalah lisensi meskipun dipakai untuk keperluan komersial.</p>
-
-<h2 id="kenapa-ram-kecil-bukan-masalah-besar">Kenapa RAM Kecil Bukan Masalah Besar</h2>
-
-<p>n8n sebenarnya cukup ringan kalau dikonfigurasi dengan benar. Kunci utamanya:</p>
-
-<ul>
-  <li><strong>Pakai SQLite, bukan PostgreSQL</strong> — SQLite sudah jadi default n8n dan jauh lebih hemat resource. Untuk belajar dan pemakaian personal, ini lebih dari cukup.</li>
-  <li><strong>Batasi memory container</strong> lewat Docker Compose supaya n8n tidak “makan” semua RAM sistem.</li>
-</ul>
-
-<h2 id="langkah-1--verifikasi-docker">Langkah 1 — Verifikasi Docker</h2>
-
-<p>Sebelum mulai, pastikan Docker benar-benar jalan:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker <span class="nt">--version</span>
-docker compose version
-<span class="nb">sudo </span>docker run hello-world
-</code></pre></div></div>
-
-<p>Kalau <code class="language-plaintext highlighter-rouge">hello-world</code> berhasil menampilkan pesan sukses, Docker sudah siap. Supaya tidak perlu ketik <code class="language-plaintext highlighter-rouge">sudo</code> tiap kali menjalankan perintah Docker:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>usermod <span class="nt">-aG</span> docker <span class="nv">$USER</span>
-</code></pre></div></div>
-
-<p>Lalu logout/login (atau restart) supaya perubahan grup berlaku.</p>
-
-<h2 id="langkah-2--buat-file-docker-composeyml">Langkah 2 — Buat File <code class="language-plaintext highlighter-rouge">docker-compose.yml</code></h2>
-
-<p>Buat folder khusus untuk project ini:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir</span> <span class="nt">-p</span> ~/n8n-local <span class="o">&amp;&amp;</span> <span class="nb">cd</span> ~/n8n-local
-</code></pre></div></div>
-
-<p><strong>Catatan penting dari pengalaman saya:</strong> kalau kamu paste konfigurasi YAML ke editor <code class="language-plaintext highlighter-rouge">nano</code>, ada kemungkinan muncul error aneh seperti:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>go-yaml load error in scanner at L2.C9: mapping values are not allowed in this context
-</code></pre></div></div>
-
-<p>Ini biasanya terjadi karena karakter tersembunyi atau indentasi yang berantakan waktu proses copy-paste ke <code class="language-plaintext highlighter-rouge">nano</code>. Solusi paling aman: skip <code class="language-plaintext highlighter-rouge">nano</code>, langsung tulis file lewat <code class="language-plaintext highlighter-rouge">heredoc</code> di terminal — ini menulis teks apa adanya tanpa campur tangan editor:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cat</span> <span class="o">&gt;</span> docker-compose.yml <span class="o">&lt;&lt;</span> <span class="sh">'</span><span class="no">EOF</span><span class="sh">'
-services:
-  n8n:
-    image: n8nio/n8n:latest
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    environment:
-      - GENERIC_TIMEZONE=Asia/Jakarta
-      - TZ=Asia/Jakarta
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-    volumes:
-      - n8n_data:/home/node/.n8n
-    deploy:
-      resources:
-        limits:
-          memory: 1.5g
-
-volumes:
-  n8n_data:
-</span><span class="no">EOF
-</span></code></pre></div></div>
-
-<p>Bagian <code class="language-plaintext highlighter-rouge">deploy.resources.limits.memory</code> membatasi container maksimal pakai 1.5GB RAM — penting kalau sistem kamu terbatas seperti punya saya. Kalau nanti versi Docker Compose kamu tidak membaca setting ini, ganti dengan <code class="language-plaintext highlighter-rouge">mem_limit: 1.5g</code> sejajar dengan baris <code class="language-plaintext highlighter-rouge">image:</code>.</p>
-
-<p>Validasi dulu sebelum dijalankan:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker compose config
-</code></pre></div></div>
-
-<p>Kalau tidak ada error, lanjut.</p>
-
-<h2 id="langkah-3--jalankan-container">Langkah 3 — Jalankan Container</h2>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker compose up <span class="nt">-d</span>
-docker compose ps
-docker compose logs <span class="nt">-f</span>
-</code></pre></div></div>
-
-<p>Kalau di log muncul baris:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Editor is now accessible via:
-http://localhost:5678
-</code></pre></div></div>
-
-<p>Berarti n8n sudah jalan. Buka <code class="language-plaintext highlighter-rouge">http://localhost:5678</code> di browser, dan ikuti wizard untuk membuat akun owner (email + password) — ini menggantikan basic auth di versi-versi lama n8n.</p>
-
-<p>Kamu mungkin juga melihat beberapa warning deprecation di log (misalnya soal <code class="language-plaintext highlighter-rouge">WEBHOOK_URL</code> vs <code class="language-plaintext highlighter-rouge">N8N_WEBHOOK_URL</code>, atau soal Python task runner yang tidak tersedia). Selama tidak ada kata “failed to start” untuk n8n itu sendiri dan baris “Editor is now accessible” muncul, itu semua aman diabaikan untuk pemakaian dasar.</p>
-
-<h2 id="langkah-4--akses-publik-lewat-tailscale-funnel">Langkah 4 — Akses Publik Lewat Tailscale Funnel</h2>
-
-<p>Kalau kamu ingin n8n bisa menerima webhook dari internet (misalnya dari WhatsApp API, Telegram, Google Forms), n8n perlu diakses lewat domain publik dengan HTTPS — bukan cuma <code class="language-plaintext highlighter-rouge">localhost</code>. Di sinilah Tailscale Funnel berguna: gratis, otomatis dapat sertifikat HTTPS, tanpa perlu setup Nginx/Certbot manual.</p>
-
-<h3 id="41-install-tailscale-di-host-bukan-di-dalam-container">4.1 Install Tailscale di host (bukan di dalam container)</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-fsSL</span> https://tailscale.com/install.sh | sh
-<span class="nb">sudo </span>tailscale up
-</code></pre></div></div>
-
-<p>Ikuti link login yang muncul, approve device-nya dari browser.</p>
-
-<h3 id="42-aktifkan-https-certificates">4.2 Aktifkan HTTPS Certificates</h3>
-
-<p>Buka <a href="https://login.tailscale.com/admin/dns">admin console Tailscale</a>, aktifkan toggle <strong>HTTPS Certificates</strong>. Tanpa ini, Funnel tidak bisa menerbitkan sertifikat otomatis.</p>
-
-<h3 id="43-jalankan-funnel">4.3 Jalankan Funnel</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>tailscale funnel <span class="nt">--bg</span> 5678
-tailscale funnel status
-</code></pre></div></div>
-
-<p>Perintah kedua menampilkan domain publik kamu, formatnya <strong><code class="language-plaintext highlighter-rouge">nama-device.nama-tailnet.ts.net</code></strong> — misalnya <code class="language-plaintext highlighter-rouge">yulian-imac.banteng-fahrenheit.ts.net</code>. Catat domain lengkapnya (dua bagian sebelum <code class="language-plaintext highlighter-rouge">.ts.net</code>, jangan sampai kepotong).</p>
-
-<blockquote>
-  <p><strong>Jebakan umum:</strong> kalau kamu cuma pakai bagian belakang domainnya (nama tailnet saja, tanpa nama device), browser akan menampilkan error <code class="language-plaintext highlighter-rouge">DNS_PROBE_FINISHED_NXDOMAIN</code>. Selalu pakai domain lengkap dari hasil <code class="language-plaintext highlighter-rouge">tailscale funnel status</code>.</p>
-</blockquote>
-
-<h3 id="44-update-konfigurasi-n8n">4.4 Update Konfigurasi n8n</h3>
-
-<p>Edit <code class="language-plaintext highlighter-rouge">docker-compose.yml</code>, ganti bagian <code class="language-plaintext highlighter-rouge">environment</code> dengan domain funnel kamu:</p>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="na">environment</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">GENERIC_TIMEZONE=Asia/Jakarta</span>
-      <span class="pi">-</span> <span class="s">TZ=Asia/Jakarta</span>
-      <span class="pi">-</span> <span class="s">N8N_HOST=nama-device.nama-tailnet.ts.net</span>
-      <span class="pi">-</span> <span class="s">N8N_PROTOCOL=https</span>
-      <span class="pi">-</span> <span class="s">N8N_PORT=5678</span>
-      <span class="pi">-</span> <span class="s">N8N_WEBHOOK_URL=https://nama-device.nama-tailnet.ts.net.ts.net/</span>
-      <span class="pi">-</span> <span class="s">N8N_PROXY_HOPS=1</span>
-</code></pre></div></div>
-
-<p>Dua hal wajib menurut dokumentasi resmi n8n saat berjalan di belakang reverse proxy: <code class="language-plaintext highlighter-rouge">N8N_WEBHOOK_URL</code> (bukan <code class="language-plaintext highlighter-rouge">WEBHOOK_URL</code> yang sudah deprecated) dan <code class="language-plaintext highlighter-rouge">N8N_PROXY_HOPS=1</code>.</p>
-
-<p>Restart container supaya env baru terbaca:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker compose down
-docker compose up <span class="nt">-d</span>
-</code></pre></div></div>
-
-<h3 id="45-test-dari-luar">4.5 Test dari Luar</h3>
-
-<p>Buka domain funnel-nya dari HP pakai koneksi internet lain (bukan koneksi internet yang kamu pakai saat ini), untuk memastikan benar-benar bisa diakses publik.</p>
-
-<blockquote>
-  <p><strong>Kalau muncul “Cannot GET /”:</strong> jangan panik dulu. Dalam pengalaman saya, ini hilang sendiri setelah beberapa saat — kemungkinan sertifikat HTTPS-nya masih dalam proses terbit/propagasi.</p>
-</blockquote>
-
-<h3 id="46-satu-hal-yang-sering-terlewat-jangan-pakai-localhost-lagi">4.6 Satu Hal yang Sering Terlewat: Jangan Pakai <code class="language-plaintext highlighter-rouge">localhost</code> Lagi</h3>
-
-<p>Setelah <code class="language-plaintext highlighter-rouge">N8N_PROTOCOL=https</code> diaktifkan, n8n otomatis mengaktifkan <strong>secure cookie</strong>, yang cuma bisa dikirim lewat koneksi HTTPS. Kalau kamu masih coba akses <code class="language-plaintext highlighter-rouge">http://localhost:5678</code> (plain http), kemungkinan besar akan muncul error:</p>
-
-<blockquote>
-  <p>“Your n8n server is configured to use a secure cookie, however, you are visiting this via an insecure URL”</p>
-</blockquote>
-
-<p>Solusinya simpel: <strong>selalu akses lewat domain Tailscale</strong>, walaupun kamu sedang bekerja langsung dari komputer yang sama. Karena Tailscale jalan di host, domain ini tetap bisa diakses normal dari komputer itu sendiri dengan HTTPS yang valid.</p>
-
-<h2 id="kenalan-dengan-konsep-dasar-n8n">Kenalan dengan Konsep Dasar n8n</h2>
-
-<p>Kalau kamu sudah familiar dengan format JSON, bagian ini akan terasa mudah — karena di balik layar, n8n cuma “mengoper” data antar node dalam bentuk JSON.</p>
-
-<p><strong>Istilah kunci:</strong></p>
-
-<ul>
-  <li><strong>Workflow</strong> — alur kerja otomatis, kumpulan node yang disambung jadi satu alur.</li>
-  <li><strong>Node</strong> — satu “kotak” instruksi. Tiap kotak melakukan satu hal spesifik.</li>
-  <li><strong>Trigger</strong> — node khusus yang memicu seluruh alur untuk mulai berjalan. Ibarat bel di pintu toko: begitu bunyi, alur mulai bergerak.</li>
-  <li><strong>Webhook trigger</strong> — jenis trigger yang menunggu “pesan” datang dari aplikasi lain lewat internet (misalnya notifikasi WhatsApp).</li>
-</ul>
-
-<p>Setiap node menghasilkan output berbentuk <strong>array of items</strong>, dan tiap item punya properti <code class="language-plaintext highlighter-rouge">json</code>:</p>
-
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
-  </span><span class="p">{</span><span class="w">
-    </span><span class="nl">"json"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"pesan"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Halo dari brownies!"</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">]</span><span class="w">
-</span></code></pre></div></div>
-
-<h2 id="latihan-pertama-aman-tanpa-internet">Latihan Pertama (Aman, Tanpa Internet)</h2>
-
-<ol>
-  <li>Buka n8n, klik <strong>”+ Add workflow”</strong>.</li>
-  <li>Di canvas kosong, klik <strong>”+”</strong>, cari dan pilih <strong>“Manual Trigger”</strong> — trigger paling sederhana, cuma jalan kalau kamu klik tombol Execute sendiri.</li>
-  <li>Klik <strong>”+”</strong> lagi di sebelah kanan node itu, tambahkan node <strong>“Edit Fields (Set)”</strong> — untuk mengisi data sederhana.</li>
-  <li>Klik <strong>“Execute workflow”</strong>, lihat node menyala hijau kalau berhasil. Klik tiap node untuk lihat data JSON yang lewat di dalamnya.</li>
-</ol>
-
-<h2 id="langkah-lanjutan">Langkah Lanjutan</h2>
-
-<p>Setelah nyaman dengan latihan dasar:</p>
-
-<ol>
-  <li><strong>Cek tab output tiap node</strong> — kunci membaca n8n, selalu lihat data apa yang tersedia dari node sebelumnya.</li>
-  <li><strong>Pakai expression</strong> — ketik <code class="language-plaintext highlighter-rouge">{{ $json.pesan }}</code> di kolom input node mana pun untuk mengambil data dari node sebelumnya.</li>
-  <li>
-    <p><strong>Coba HTTP Request node</strong> dengan API publik gratis, misalnya <code class="language-plaintext highlighter-rouge">https://jsonplaceholder.typicode.com/todos/1</code> (API khusus untuk latihan, stabil) atau <code class="language-plaintext highlighter-rouge">https://catfact.ninja/fact</code>.</p>
-
-    <blockquote>
-      <p>Catatan: API <code class="language-plaintext highlighter-rouge">api.quotable.io</code> yang dulu populer untuk latihan sekarang sering down/tidak stabil — hindari untuk latihan baru.</p>
-    </blockquote>
-  </li>
-  <li><strong>Kenalan dengan IF node</strong> — node ini mengecek kondisi dan membelah alur jadi dua jalur (true/false), dasar dari logika otomatis.</li>
-  <li><strong>Ganti Manual Trigger dengan Schedule Trigger</strong> — supaya workflow jalan otomatis di jadwal tertentu (misalnya tiap jam 8 pagi), bukan cuma saat diklik manual.</li>
-</ol>
-
-<h2 id="penutup">Penutup</h2>
-
-<p>Itu dia perjalanan setup n8n self-hosted saya dari nol di komputer lama — mulai dari Docker, Tailscale Funnel untuk akses publik, sampai kenalan konsep dasarnya. Kalau kamu juga sedang mencoba di hardware terbatas, semoga error-error di atas menghemat waktu debugging kamu.</p>
-
-<p>Langkah saya selanjutnya: mulai bangun workflow yang benar-benar dipakai sehari-hari — entah untuk otomasi kerja toko, atau bantu proses konten. Akan saya tulis lagi kalau ada progres.</p>]]></content><author><name>Yulian Hartadi</name></author><summary type="html"><![CDATA[Kalau kamu punya komputer lama yang nganggur — misalnya iMac 2011 dengan RAM cuma 4GB seperti punya saya — dan koneksi internet yang stabil dan unlimited, kamu bisa manfaatkan untuk otomatisasi kerja sehari-hari menggunakan AI tanpa perlu langganan cloud berbayar dulu. Semua langkah di bawah sudah saya coba sendiri, lengkap dengan error-error yang saya temui dan cara memperbaikinya.]]></summary></entry></feed>
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    
+    <title>Yulian Hartadi</title>
+    
+    
+    <description>AI Automation Specialist UMKM, F&amp;B Business</description>
+    
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
+    
+    
+      <item>
+        <title>Setup n8n Self-Hosted di Komputer Lama (4GB RAM): Panduan dari Nol</title>
+        
+        <dc:creator><![CDATA[ Yulian Hartadi ]]></dc:creator>
+        
+        <description>
+          
+          Kalau kamu punya komputer lama yang nganggur — misalnya iMac 2011 dengan RAM cuma 4GB seperti punya saya — dan koneksi internet yang stabil dan unlimited, kamu bisa manfaatkan untuk otomatisasi kerja sehari-hari menggunakan AI tanpa perlu langganan cloud berbayar dulu. Semua langkah di bawah sudah saya coba sendiri, lengkap...
+        </description>
+        <pubDate>Mon, 07 Sep 2026 00:00:00 -0400</pubDate>
+        <link>http://localhost:4000/2026-09-07-setup-n8n-imac-lama-docker-tailscale/</link>
+        <guid isPermaLink="true">http://localhost:4000/2026-09-07-setup-n8n-imac-lama-docker-tailscale/</guid>
+      </item>
+    
+  </channel>
+</rss>
