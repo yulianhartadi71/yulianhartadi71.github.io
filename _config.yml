@@ -1,3 +1,21 @@
 title: Yulian Hartadi
-description: Portfolio, CV, dan catatan belajar Docker & n8n
+description: AI Automation Specialist UMKM Food & Beverage
 theme: minima
+
+url: "https://yulianhartadi71.github.io"
+baseurl: ""
+
+author: Yulian Hartadi
+lang: id
+
+permalink: /:categories/:title/
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
