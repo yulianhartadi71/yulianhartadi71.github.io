@@ -1,0 +1,54 @@
+<p>Saya lagi belajar self-hosting dan automation, dan salah satu tantangan terbesarnya: menjalankan semuanya di hardware lama yang serba terbatas — iMac 2011 dengan RAM cuma 4GB, pakai Linux Mint. Tulisan ini catatan proses saya self-host <a href="https://n8n.io">n8n</a> (tool automation workflow) di mesin tersebut, pakai Docker dan diekspos ke publik lewat Tailscale Funnel.</p>
+
+<h2 id="kenapa-docker-bukan-virtual-machine">Kenapa Docker, Bukan Virtual Machine</h2>
+
+<p>Docker container berbagi kernel OS host, beda dengan VM yang menjalankan OS tamu penuh. Karena itu container jauh lebih ringan dan cepat dinyalakan — penting banget di mesin dengan RAM terbatas seperti iMac saya. Bonus lain: Docker Engine di Linux itu open source penuh (lisensi Apache-2.0), jadi tidak ada masalah lisensi meskipun dipakai untuk keperluan komersial.</p>
+
+<h2 id="docker-compose-untuk-n8n">Docker Compose untuk n8n</h2>
+
+<p>Karena RAM cuma 4GB, saya pakai SQLite (bawaan n8n, tidak perlu database server terpisah) dan <strong>wajib</strong> kasih batas resource ke container — kalau tidak, satu container bisa “makan” semua RAM dan bikin sistem hang.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">services</span><span class="pi">:</span>
+  <span class="na">n8n</span><span class="pi">:</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">n8nio/n8n:latest</span>
+    <span class="na">container_name</span><span class="pi">:</span> <span class="s">n8n</span>
+    <span class="na">restart</span><span class="pi">:</span> <span class="s">unless-stopped</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">5678:5678"</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">N8N_PROTOCOL=https</span>
+      <span class="pi">-</span> <span class="s">N8N_WEBHOOK_URL=https://ganti-dengan-domain-tailscale-kamu.ts.net/</span>
+      <span class="pi">-</span> <span class="s">GENERIC_TIMEZONE=Asia/Jakarta</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">n8n_data:/home/node/.n8n</span>
+    <span class="na">mem_limit</span><span class="pi">:</span> <span class="s">512m</span>
+    <span class="na">mem_reservation</span><span class="pi">:</span> <span class="s">256m</span>
+
+<span class="na">volumes</span><span class="pi">:</span>
+  <span class="na">n8n_data</span><span class="pi">:</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>Ganti nilai <code class="language-plaintext highlighter-rouge">mem_limit</code> dan domain Tailscale di atas sesuai konfigurasi asli kamu.</p>
+</blockquote>
+
+<h2 id="ekspos-ke-publik-dengan-tailscale-funnel">Ekspos ke Publik dengan Tailscale Funnel</h2>
+
+<p>Supaya n8n bisa diakses dari luar jaringan lokal dengan HTTPS otomatis (tanpa perlu urus sertifikat SSL manual), saya pakai Tailscale Funnel:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>tailscale funnel 5678
+</code></pre></div></div>
+
+<h2 id="gotcha-yang-saya-temui">Gotcha yang Saya Temui</h2>
+
+<p>Beberapa hal yang bikin saya muter-muter cari solusi:</p>
+
+<ul>
+  <li><strong>Setelah set <code class="language-plaintext highlighter-rouge">N8N_PROTOCOL=https</code>, akses lewat <code class="language-plaintext highlighter-rouge">localhost</code> malah error.</strong> Ternyata browser menolak cookie yang ditandai “secure” kalau diakses lewat koneksi non-HTTPS seperti localhost. Solusinya: selalu akses lewat domain Tailscale, bukan localhost, begitu HTTPS diaktifkan.</li>
+  <li><strong>Domain Tailscale harus lengkap</strong> — formatnya <code class="language-plaintext highlighter-rouge">nama-device.nama-tailnet.ts.net</code>, bukan cuma nama device saja.</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">WEBHOOK_URL</code> sudah deprecated</strong> sejak n8n v2.37.10 ke atas — pakai <code class="language-plaintext highlighter-rouge">N8N_WEBHOOK_URL</code> sebagai gantinya, kalau tidak, webhook n8n tidak akan berfungsi dengan benar.</li>
+</ul>
+
+<h2 id="penutup">Penutup</h2>
+
+<p>Setup ini masih dasar, tapi sudah cukup untuk mulai bikin workflow automation pertama saya. Ke depan saya akan tulis lanjutannya — soal workflow n8n itu sendiri, dari trigger sampai HTTP Request node.</p>
