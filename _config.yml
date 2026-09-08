@@ -23,10 +23,10 @@ lang: id
 
 navbar-links:
   About Me: "aboutme"
-  Resources:
-    - Beautiful Jekyll: "https://beautifuljekyll.com"
-    - Learn markdown: "https://www.markdowntutorial.com/"
-  Author's home: "https://deanattali.com"
+  Tutorial:
+    - AI Agent: "https://yulianhartai71.github.io"
+    - Others: "https://yulianhartai71.github.io"
+  Author's home: "https://yulianhartai71.github.io"
 
 ################
 # --- Logo --- #
@@ -59,7 +59,7 @@ social-network-links:
   twitter: yulianhartadi
   patreon: yulianhartadi
   youtube: "@yulianhartadi"
-  whatsapp: +62 878 3181 3890
+  whatsapp: +6287831813890
 #  medium: yourname
 #  reddit: yourname or r/yoursubreddit
 #  linkedin: daattali
